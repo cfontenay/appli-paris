@@ -10,18 +10,23 @@ import { thisExpression } from "@babel/types";
 export default class AddressViewer extends Component{
     constructor (props: any) {
         super(props);
-        this.state = {address: '', isWaitingForResult:false};
+        this.state = {address: '', isWaitingForResult:false, position: []};
+        
+    }
+    componentDidMount() {
+        this.reloadAddress();
     }
     render() {
         return (
             <View  style={{justifyContent:'center', alignItems:'center', top:'50%'}} >
                 <Button large icon={{name: 'cached'}} title={'Refresh'} onPress={() => this.reloadAddress()}></Button>
-                
+                <Text>{`lat: ${this.state.position[0]} ; lng: ${this.state.position[1]}`}</Text>
                 <DrawAddress isWaitingForResult={this.state.isWaitingForResult} address={this.state.address}></DrawAddress>
             </View>
         );
     }
     reloadAddress() {
+        this.state.position = [];
         if (this.state.isWaitingForResult) {
             return;
         }
@@ -29,6 +34,7 @@ export default class AddressViewer extends Component{
             isWaitingForResult:true
         })  
         Geolocation.getCurrentPosition(position =>{
+            this.state.position = [position.coords.latitude, position.coords.longitude];
             new ApiManager().requestForAddress(position.coords.latitude, position.coords.longitude)
             .then(res => {
                 this.setState({
@@ -36,7 +42,7 @@ export default class AddressViewer extends Component{
                     isWaitingForResult:false
                 })
             });
-        }, error => this.setState({address:'gps error'}), { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 });
+        }, error => this.setState({address:'gps error', isWaitingForResult:false}), { enableHighAccuracy: true, timeout: 15000 });
     }
     
 }
